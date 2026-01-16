@@ -1,0 +1,627 @@
+﻿# CHAPTERS 13-15: REACT FRONTEND SETUP
+
+## CHAPTER 13: INTRODUCTION TO REACT
+
+### What is React?
+
+React is a JavaScript library for building user interfaces with components. It allows you to break down complex UIs into smaller, reusable pieces.
+
+**Component Architecture Example:**
+- Navigation Bar Component
+- Movie List Component
+  - Individual Movie Card Components
+    - Rating Component
+
+**Benefits:**
+- Reusable components
+- Efficient updates with Virtual DOM
+- Component-based architecture for maintainability
+
+### Creating the React Project
+
+Navigate to your `movie-reviews` directory (not inside backend):
+
+```bash
+# Make sure you're in movie-reviews folder, NOT in backend
+cd movie-reviews
+
+# Create React app (this will take a few minutes)
+npx create-react-app frontend
+
+# Navigate into frontend folder
+cd frontend
+
+# Start the development server
+npm start
+```
+
+Your browser will automatically open to `http://localhost:3000` showing the default React app.
+
+### Project Structure
+
+```
+movie-reviews/
+├── backend/          (your existing backend)
+└── frontend/         (new React app)
+    ├── node_modules/
+    ├── public/
+    │   ├── index.html
+    │   └── ...
+    ├── src/
+    │   ├── App.js
+    │   ├── App.css
+    │   ├── index.js
+    │   ├── index.css
+    │   └── ...
+    └── package.json
+```
+
+### Understanding Key Files
+
+**src/index.js** - Entry point that renders App into the DOM:
+```javascript
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import App from './App';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+```
+
+**src/App.js** - Main component:
+```javascript
+function App() {
+  return (
+    <div className="App">
+      {/* Your app content goes here */}
+    </div>
+  );
+}
+
+export default App;
+```
+
+### Install Required Dependencies
+
+Stop the React server (Ctrl+C) and install required packages:
+
+```bash
+# Install React Bootstrap
+npm install react-bootstrap bootstrap
+
+# Install React Router (version 5.2)
+npm install react-router-dom@5.2.0
+
+# Install Axios for API calls
+npm install axios
+```
+
+### Update package.json
+
+Your `frontend/package.json` should now include:
+
+```json
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "axios": "^1.x.x",
+    "bootstrap": "^5.x.x",
+    "react": "^18.x.x",
+    "react-bootstrap": "^2.x.x",
+    "react-dom": "^18.x.x",
+    "react-router-dom": "5.2.0",
+    "react-scripts": "5.x.x"
+  }
+}
+```
+
+---
+
+## CHAPTER 14: CREATE NAVIGATION HEADER BAR
+
+### Step 1: Create Component Files
+
+Create a `components` folder inside `src`:
+
+```bash
+# In frontend/src directory
+mkdir components
+```
+
+Create these four files in `frontend/src/components/`:
+
+**1. movies-list.js**
+```javascript
+import React from 'react';
+
+function MoviesList() {
+  return (
+    <div className="App"> 
+      Movies List
+    </div>
+  );
+}
+
+export default MoviesList;
+```
+
+**2. movie.js**
+```javascript
+import React from 'react';
+
+function Movie() {
+  return (
+    <div className="App"> 
+      Movie
+    </div>
+  );
+}
+
+export default Movie;
+```
+
+**3. add-review.js**
+```javascript
+import React from 'react';
+
+function AddReview() {
+  return (
+    <div className="App"> 
+      Add Review
+    </div>
+  );
+}
+
+export default AddReview;
+```
+
+**4. login.js**
+```javascript
+import React from 'react';
+
+function Login() {
+  return (
+    <div className="App"> 
+      Login
+    </div>
+  );
+}
+
+export default Login;
+```
+
+### Step 2: Update App.js
+
+Replace the contents of `frontend/src/App.js`:
+
+```javascript
+import React from 'react';
+import { Switch, Route, Link } from "react-router-dom";
+import "bootstrap/dist/css/bootstrap.min.css";
+import Nav from 'react-bootstrap/Nav';
+import Navbar from 'react-bootstrap/Navbar';
+
+import AddReview from "./components/add-review";
+import MoviesList from "./components/movies-list";
+import Movie from "./components/movie";
+import Login from "./components/login";
+
+function App() {
+  const [user, setUser] = React.useState(null);
+
+  async function login(user = null) {
+    setUser(user);
+  }
+
+  async function logout() {
+    setUser(null);
+  }
+
+  return (
+    <div className="App">
+      <Navbar bg="light" expand="lg">
+        <Navbar.Brand href="#home">Movie Reviews</Navbar.Brand>
+        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+        <Navbar.Collapse id="basic-navbar-nav">
+          <Nav className="mr-auto">
+            <Nav.Link>
+              <Link to={"/movies"}>Movies</Link>
+            </Nav.Link>
+            <Nav.Link>
+              {user ? (
+                <a onClick={logout}>Logout User</a>
+              ) : (
+                <Link to={"/login"}>Login</Link>
+              )}
+            </Nav.Link>
+          </Nav>
+        </Navbar.Collapse>
+      </Navbar>
+    </div>
+  );
+}
+
+export default App;
+```
+
+### Step 3: Wrap App with BrowserRouter
+
+Update `frontend/src/index.js`:
+
+```javascript
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import App from './App';
+import { BrowserRouter } from 'react-router-dom';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <BrowserRouter>
+    <App />
+  </BrowserRouter>
+);
+```
+
+### Code Explanation
+
+**User State Management:**
+```javascript
+const [user, setUser] = React.useState(null);
+```
+- `user` holds the logged-in user info (or null if not logged in)
+- `setUser` is the function to update the user state
+- `React.useState(null)` initializes user as null (not logged in)
+
+**Login Function:**
+```javascript
+async function login(user = null) {
+  setUser(user);
+}
+```
+- Called from Login component to set user state
+- Passed as a prop to Login component later
+
+**Logout Function:**
+```javascript
+async function logout() {
+  setUser(null);
+}
+```
+- Resets user to null (logs out)
+
+**Conditional Rendering:**
+```javascript
+{user ? (
+  <a onClick={logout}>Logout User</a>
+) : (
+  <Link to={"/login"}>Login</Link>
+)}
+```
+- If user is logged in (user is truthy), show "Logout User"
+- If not logged in (user is null), show "Login" link
+
+**React Router Links:**
+```javascript
+<Link to={"/movies"}>Movies</Link>
+```
+- `Link` component from react-router-dom navigates without page reload
+- `to` prop specifies the route path
+
+### Test Your App
+
+Run the app:
+```bash
+npm start
+```
+
+You should see:
+- A navigation bar with "Movie Reviews" brand
+- "Movies" link
+- "Login" link
+
+The navbar is responsive - on mobile, it collapses into a hamburger menu.
+
+---
+
+## CHAPTER 15: DEFINING OUR ROUTES
+
+Now we'll add routing so clicking the navbar links displays different components.
+
+### Update App.js with Routes
+
+Add the `Switch` and `Route` components after the Navbar in `App.js`:
+
+```javascript
+import React from 'react';
+import { Switch, Route, Link } from "react-router-dom";
+import "bootstrap/dist/css/bootstrap.min.css";
+import Nav from 'react-bootstrap/Nav';
+import Navbar from 'react-bootstrap/Navbar';
+
+import AddReview from "./components/add-review";
+import MoviesList from "./components/movies-list";
+import Movie from "./components/movie";
+import Login from "./components/login";
+
+function App() {
+  const [user, setUser] = React.useState(null);
+
+  async function login(user = null) {
+    setUser(user);
+  }
+
+  async function logout() {
+    setUser(null);
+  }
+
+  return (
+    <div className="App">
+      <Navbar bg="light" expand="lg">
+        <Navbar.Brand href="#home">Movie Reviews</Navbar.Brand>
+        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+        <Navbar.Collapse id="basic-navbar-nav">
+          <Nav className="mr-auto">
+            <Nav.Link>
+              <Link to={"/movies"}>Movies</Link>
+            </Nav.Link>
+            <Nav.Link>
+              {user ? (
+                <a onClick={logout}>Logout User</a>
+              ) : (
+                <Link to={"/login"}>Login</Link>
+              )}
+            </Nav.Link>
+          </Nav>
+        </Navbar.Collapse>
+      </Navbar>
+
+      <Switch>
+        <Route exact path={["/", "/movies"]} component={MoviesList}>
+        </Route>
+        <Route path="/movies/:id/review" render={(props) =>
+          <AddReview {...props} user={user} />
+        }>
+        </Route>
+        <Route path="/movies/:id/" render={(props) =>
+          <Movie {...props} user={user} />
+        }>
+        </Route>
+        <Route path="/login" render={(props) =>
+          <Login {...props} login={login} />
+        }>
+        </Route>
+      </Switch>
+    </div>
+  );
+}
+
+export default App;
+```
+
+### Code Explanation
+
+**Switch Component:**
+```javascript
+<Switch>
+  {/* Routes go here */}
+</Switch>
+```
+- Renders the FIRST matching route
+- Stops checking once a match is found
+- Prevents multiple routes from rendering at once
+
+**Route Types:**
+
+**1. Component Route (Simple):**
+```javascript
+<Route exact path={["/", "/movies"]} component={MoviesList}>
+</Route>
+```
+- `exact` means path must match exactly (not just start with)
+- `path` can be an array for multiple paths
+- `component` renders the specified component
+- Both "/" and "/movies" will render MoviesList
+
+**2. Render Route (With Props):**
+```javascript
+<Route path="/movies/:id/review" render={(props) =>
+  <AddReview {...props} user={user} />
+}>
+</Route>
+```
+- `render` allows passing additional props
+- `{...props}` spreads React Router props (match, location, history)
+- `user={user}` passes our user state as a prop
+- `:id` is a URL parameter (e.g., /movies/123/review)
+
+**URL Parameters:**
+```javascript
+path="/movies/:id/"
+```
+- `:id` captures the movie ID from the URL
+- Example: `/movies/573a1390f29313caabcd4135/`
+- Accessible via `props.match.params.id` in the component
+
+**Route Breakdown:**
+
+| Path | Component | Purpose | Props Passed |
+|------|-----------|---------|--------------|
+| `/` or `/movies` | MoviesList | Home page with movie list | - |
+| `/movies/:id/review` | AddReview | Add/edit review for a movie | user |
+| `/movies/:id/` | Movie | View single movie with reviews | user |
+| `/login` | Login | Login page | login function |
+
+**Why Pass Props?**
+
+```javascript
+<AddReview {...props} user={user} />
+```
+- `{...props}` gives access to:
+  - `match.params.id` - movie ID from URL
+  - `history.push()` - programmatic navigation
+  - `location.state` - passed state data
+- `user={user}` allows component to check if user is logged in
+
+### Test Your Routes
+
+Run the app and test navigation:
+
+```bash
+npm start
+```
+
+**Test Cases:**
+
+1. Go to `http://localhost:3000/` → Should show "Movies List"
+2. Go to `http://localhost:3000/movies` → Should show "Movies List"
+3. Go to `http://localhost:3000/login` → Should show "Login"
+4. Go to `http://localhost:3000/movies/123` → Should show "Movie"
+5. Go to `http://localhost:3000/movies/123/review` → Should show "Add Review"
+
+**Click Navigation:**
+- Click "Movies" link → Should navigate to Movies List
+- Click "Login" link → Should navigate to Login
+
+---
+
+## COMPLETE APP.JS (Chapters 13-15)
+
+Here's the complete `frontend/src/App.js` with all changes:
+
+```javascript
+import React from 'react';
+import { Switch, Route, Link } from "react-router-dom";
+import "bootstrap/dist/css/bootstrap.min.css";
+import Nav from 'react-bootstrap/Nav';
+import Navbar from 'react-bootstrap/Navbar';
+
+import AddReview from "./components/add-review";
+import MoviesList from "./components/movies-list";
+import Movie from "./components/movie";
+import Login from "./components/login";
+
+function App() {
+  const [user, setUser] = React.useState(null);
+
+  async function login(user = null) {
+    setUser(user);
+  }
+
+  async function logout() {
+    setUser(null);
+  }
+
+  return (
+    <div className="App">
+      <Navbar bg="light" expand="lg">
+        <Navbar.Brand href="#home">Movie Reviews</Navbar.Brand>
+        <Navbar.Toggle aria-controls="basic-navbar-nav" />
+        <Navbar.Collapse id="basic-navbar-nav">
+          <Nav className="mr-auto">
+            <Nav.Link>
+              <Link to={"/movies"}>Movies</Link>
+            </Nav.Link>
+            <Nav.Link>
+              {user ? (
+                <a onClick={logout}>Logout User</a>
+              ) : (
+                <Link to={"/login"}>Login</Link>
+              )}
+            </Nav.Link>
+          </Nav>
+        </Navbar.Collapse>
+      </Navbar>
+
+      <Switch>
+        <Route exact path={["/", "/movies"]} component={MoviesList}>
+        </Route>
+        <Route path="/movies/:id/review" render={(props) =>
+          <AddReview {...props} user={user} />
+        }>
+        </Route>
+        <Route path="/movies/:id/" render={(props) =>
+          <Movie {...props} user={user} />
+        }>
+        </Route>
+        <Route path="/login" render={(props) =>
+          <Login {...props} login={login} />
+        }>
+        </Route>
+      </Switch>
+    </div>
+  );
+}
+
+export default App;
+```
+
+---
+
+## PROJECT STRUCTURE SO FAR
+
+```
+movie-reviews/
+├── backend/
+│   ├── api/
+│   │   ├── movies.route.js
+│   │   ├── movies.controller.js
+│   │   └── reviews.controller.js
+│   ├── dao/
+│   │   ├── moviesDAO.js
+│   │   └── reviewsDAO.js
+│   ├── .env
+│   ├── index.js
+│   ├── server.js
+│   └── package.json
+└── frontend/
+    ├── public/
+    ├── src/
+    │   ├── components/
+    │   │   ├── movies-list.js
+    │   │   ├── movie.js
+    │   │   ├── add-review.js
+    │   │   └── login.js
+    │   ├── App.js
+    │   ├── App.css
+    │   ├── index.js
+    │   └── index.css
+    └── package.json
+```
+
+---
+
+## SUMMARY
+
+✅ **Chapter 13:** 
+- Created React app with create-react-app
+- Installed dependencies (React Bootstrap, React Router, Axios)
+- Understood component-based architecture
+
+✅ **Chapter 14:**
+- Created navigation bar with Bootstrap
+- Implemented login/logout state management
+- Created basic component files
+
+✅ **Chapter 15:**
+- Set up React Router with Switch and Route
+- Defined routes for all components
+- Passed props (user, login function) to components
+- Implemented URL parameters for dynamic routes
+
+**Next Steps:**
+In the following chapters, you'll:
+- Create a service to connect to the backend API
+- Implement the MoviesList component to display movies
+- Add search functionality
+- Display individual movies with reviews
+- Implement login, add/edit/delete reviews
+
+Your frontend foundation is now ready!
