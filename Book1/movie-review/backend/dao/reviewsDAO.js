@@ -40,7 +40,7 @@ export default class ReviewsDAO {
         user_id: user._id,             // Reviewer's user ID
         date: date,                    // Review date
         review: review,                // Review content
-        movie_id: ObjectId(movieId)    // Associated movie ID
+        movie_id: new ObjectId(movieId)    // Associated movie ID
       }
 
       // Insert review into the database

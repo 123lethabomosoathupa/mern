@@ -7,7 +7,7 @@ import Image from "react-bootstrap/Image";
 import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
 import Button from "react-bootstrap/Button";
-// import Media from "react-bootstrap/Media";
+import Media from "react-bootstrap/Media";
 import moment from "moment";
 
 const Movie = (props) => {
@@ -75,8 +75,8 @@ const Movie = (props) => {
             <br></br>
             {movie.reviews.map((review, index) => {
               return (
-                <Card key={index}>
-                  <Card.Body>
+                <Media key={index}>
+                  <Media.Body>
                     <h5>
                       {review.name + " reviewed on "}{" "}
                       {moment(review.date).format("Do MMMM YYYY")}
@@ -107,8 +107,8 @@ const Movie = (props) => {
                         </Col>
                       </Row>
                     )}
-                  </Card.Body>
-                </Card>
+                  </Media.Body>
+                </Media>
               );
             })}
           </Col>

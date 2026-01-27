@@ -1,165 +1,120 @@
-﻿# CHAPTERS 13-15: REACT FRONTEND SETUP
+﻿# CHAPTERS 18-20: MOVIE COMPONENT, REVIEWS LISTING, AND LOGIN
 
-## CHAPTER 13: INTRODUCTION TO REACT
+## CHAPTER 18: MOVIE COMPONENT
 
-### What is React?
+The Movie component displays a single movie with its poster, plot, and all reviews. Users can add reviews if logged in.
 
-React is a JavaScript library for building user interfaces with components. It allows you to break down complex UIs into smaller, reusable pieces.
+### Complete movie.js
 
-**Component Architecture Example:**
-- Navigation Bar Component
-- Movie List Component
-  - Individual Movie Card Components
-    - Rating Component
+Replace the contents of `frontend/src/components/movie.js`:
 
-**Benefits:**
-- Reusable components
-- Efficient updates with Virtual DOM
-- Component-based architecture for maintainability
-
-### Creating the React Project
-
-Navigate to your `movie-reviews` directory (not inside backend):
-
-```bash
-# Make sure you're in movie-reviews folder, NOT in backend
-cd movie-reviews
-
-# Create React app (this will take a few minutes)
-npx create-react-app frontend
-
-# Navigate into frontend folder
-cd frontend
-
-# Start the development server
-npm start
-```
-
-Your browser will automatically open to `http://localhost:3000` showing the default React app.
-
-### Project Structure
-
-```
-movie-reviews/
-├── backend/          (your existing backend)
-└── frontend/         (new React app)
-    ├── node_modules/
-    ├── public/
-    │   ├── index.html
-    │   └── ...
-    ├── src/
-    │   ├── App.js
-    │   ├── App.css
-    │   ├── index.js
-    │   ├── index.css
-    │   └── ...
-    └── package.json
-```
-
-### Understanding Key Files
-
-**src/index.js** - Entry point that renders App into the DOM:
 ```javascript
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
+import React, { useState, useEffect } from 'react';
+import MovieDataService from '../services/movies';
+import { Link } from 'react-router-dom';
+import Card from 'react-bootstrap/Card';
+import Container from 'react-bootstrap/Container';
+import Image from 'react-bootstrap/Image';
+import Col from 'react-bootstrap/Col';
+import Row from 'react-bootstrap/Row';
+import Button from 'react-bootstrap/Button';
+import Media from 'react-bootstrap/Media';
+import moment from 'moment';
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
-```
+const Movie = props => {
+  
+  const [movie, setMovie] = useState({
+    id: null,
+    title: "",
+    rated: "",
+    reviews: []
+  });
 
-**src/App.js** - Main component:
-```javascript
-function App() {
-  return (
-    <div className="App">
-      {/* Your app content goes here */}
-    </div>
-  );
-}
-
-export default App;
-```
-
-### Install Required Dependencies
-
-Stop the React server (Ctrl+C) and install required packages:
-
-```bash
-# Install React Bootstrap
-npm install react-bootstrap bootstrap
-
-# Install React Router (version 5.2)
-npm install react-router-dom@5.2.0
-
-# Install Axios for API calls
-npm install axios
-```
-
-### Update package.json
-
-Your `frontend/package.json` should now include:
-
-```json
-{
-  "name": "frontend",
-  "version": "0.1.0",
-  "private": true,
-  "dependencies": {
-    "axios": "^1.x.x",
-    "bootstrap": "^5.x.x",
-    "react": "^18.x.x",
-    "react-bootstrap": "^2.x.x",
-    "react-dom": "^18.x.x",
-    "react-router-dom": "5.2.0",
-    "react-scripts": "5.x.x"
+  const getMovie = id => {
+    MovieDataService.get(id)
+      .then(response => {
+        setMovie(response.data);
+        console.log(response.data);
+      })
+      .catch(e => {
+        console.log(e);
+      });
   }
-}
-```
 
----
+  useEffect(() => {
+    getMovie(props.match.params.id);
+  }, [props.match.params.id]);
 
-## CHAPTER 14: CREATE NAVIGATION HEADER BAR
+  const deleteReview = (reviewId, index) => {
+    MovieDataService.deleteReview(reviewId, props.user.id)
+      .then(response => {
+        setMovie((prevState) => {
+          prevState.reviews.splice(index, 1);
+          return ({
+            ...prevState
+          });
+        });
+      })
+      .catch(e => {
+        console.log(e);
+      });
+  }
 
-### Step 1: Create Component Files
-
-Create a `components` folder inside `src`:
-
-```bash
-# In frontend/src directory
-mkdir components
-```
-
-Create these four files in `frontend/src/components/`:
-
-**1. movies-list.js**
-```javascript
-import React from 'react';
-
-function MoviesList() {
   return (
-    <div className="App"> 
-      Movies List
-    </div>
-  );
-}
-
-export default MoviesList;
-```
-
-**2. movie.js**
-```javascript
-import React from 'react';
-
-function Movie() {
-  return (
-    <div className="App"> 
-      Movie
+    <div>
+      <Container>
+        <Row>
+          <Col>
+            <Image src={movie.poster + "/100px250"} fluid />
+          </Col>
+          <Col>
+            <Card>
+              <Card.Header as="h5">{movie.title}</Card.Header>
+              <Card.Body>
+                <Card.Text>
+                  {movie.plot}
+                </Card.Text>
+                {props.user && 
+                  <Link to={"/movies/" + props.match.params.id + "/review"}>
+                    Add Review
+                  </Link>
+                }
+              </Card.Body>
+            </Card>
+            <br />
+            <h2>Reviews</h2>
+            <br />
+            {movie.reviews.map((review, index) => {
+              return (
+                <Media key={index}>
+                  <Media.Body>
+                    <h5>
+                      {review.name + " reviewed on "}
+                      {moment(review.date).format("Do MMMM YYYY")}
+                    </h5>
+                    <p>{review.review}</p>
+                    {props.user && props.user.id === review.user_id &&
+                      <Row>
+                        <Col>
+                          <Link to={{
+                            pathname: "/movies/" + props.match.params.id + "/review",
+                            state: { currentReview: review }
+                          }}>Edit</Link>
+                        </Col>
+                        <Col>
+                          <Button variant="link" onClick={() => deleteReview(review._id, index)}>
+                            Delete
+                          </Button>
+                        </Col>
+                      </Row>
+                    }
+                  </Media.Body>
+                </Media>
+              )
+            })}
+          </Col>
+        </Row>
+      </Container>
     </div>
   );
 }
@@ -167,29 +122,272 @@ function Movie() {
 export default Movie;
 ```
 
-**3. add-review.js**
-```javascript
-import React from 'react';
+### Install Moment.js
 
-function AddReview() {
-  return (
-    <div className="App"> 
-      Add Review
-    </div>
-  );
-}
+For date formatting, install moment.js:
 
-export default AddReview;
+```bash
+# In frontend directory
+npm install moment
 ```
 
-**4. login.js**
-```javascript
-import React from 'react';
+### Code Explanation
 
-function Login() {
+**State Initialization:**
+```javascript
+const [movie, setMovie] = useState({
+  id: null,
+  title: "",
+  rated: "",
+  reviews: []
+});
+```
+- Initializes movie state with default values
+- `reviews` is an empty array until data loads
+
+**getMovie Function:**
+```javascript
+const getMovie = id => {
+  MovieDataService.get(id)
+    .then(response => {
+      setMovie(response.data);
+      console.log(response.data);
+    })
+    .catch(e => {
+      console.log(e);
+    });
+}
+```
+- Calls `MovieDataService.get(id)` which fetches movie by ID
+- Backend uses MongoDB `$lookup` to join reviews
+- Response contains movie data with embedded reviews array
+
+**useEffect with Dependency:**
+```javascript
+useEffect(() => {
+  getMovie(props.match.params.id);
+}, [props.match.params.id]);
+```
+- `props.match.params.id`: Movie ID from URL
+- Runs when component mounts
+- Runs again if movie ID changes (different movie)
+- Dependency array `[props.match.params.id]` prevents unnecessary re-renders
+
+**deleteReview Function:**
+```javascript
+const deleteReview = (reviewId, index) => {
+  MovieDataService.deleteReview(reviewId, props.user.id)
+    .then(response => {
+      setMovie((prevState) => {
+        prevState.reviews.splice(index, 1);
+        return ({
+          ...prevState
+        });
+      });
+    })
+    .catch(e => {
+      console.log(e);
+    });
+}
+```
+- Calls API to delete review from database
+- `prevState`: Previous movie state
+- `splice(index, 1)`: Removes review at index
+- `...prevState`: Spread operator copies state
+- Updates UI immediately without page refresh
+
+**Movie Display:**
+```javascript
+<Row>
+  <Col>
+    <Image src={movie.poster + "/100px250"} fluid />
+  </Col>
+  <Col>
+    <Card>
+      <Card.Header as="h5">{movie.title}</Card.Header>
+      <Card.Body>
+        <Card.Text>{movie.plot}</Card.Text>
+        {props.user && 
+          <Link to={"/movies/" + props.match.params.id + "/review"}>
+            Add Review
+          </Link>
+        }
+      </Card.Body>
+    </Card>
+  </Col>
+</Row>
+```
+- Two columns: poster on left, details on right
+- `fluid`: Makes image responsive
+- Shows "Add Review" link only if user is logged in
+
+**Reviews Mapping:**
+```javascript
+{movie.reviews.map((review, index) => {
   return (
-    <div className="App"> 
-      Login
+    <Media key={index}>
+      <Media.Body>
+        <h5>
+          {review.name + " reviewed on "}
+          {moment(review.date).format("Do MMMM YYYY")}
+        </h5>
+        <p>{review.review}</p>
+        {/* Edit/Delete buttons */}
+      </Media.Body>
+    </Media>
+  )
+})}
+```
+- Maps through reviews array
+- `moment()`: Formats date (e.g., "10th May 2021")
+- Each review shows reviewer name, date, and review text
+
+**Edit/Delete Buttons:**
+```javascript
+{props.user && props.user.id === review.user_id &&
+  <Row>
+    <Col>
+      <Link to={{
+        pathname: "/movies/" + props.match.params.id + "/review",
+        state: { currentReview: review }
+      }}>Edit</Link>
+    </Col>
+    <Col>
+      <Button variant="link" onClick={() => deleteReview(review._id, index)}>
+        Delete
+      </Button>
+    </Col>
+  </Row>
+}
+```
+- Only shows if user is logged in AND user owns the review
+- **Edit**: Links to add-review component with current review in state
+- **Delete**: Calls deleteReview with review ID and array index
+
+---
+
+## CHAPTER 19: LISTING REVIEWS
+
+The reviews are already displayed in Chapter 18's code above. This chapter focuses on formatting and understanding the review display.
+
+### Review Display Features
+
+**Date Formatting with Moment.js:**
+```javascript
+import moment from 'moment';
+
+// In the component:
+{moment(review.date).format("Do MMMM YYYY")}
+```
+- Converts: `2021-05-10T00:08:50.082Z`
+- To: `10th May 2021`
+- Other formats: `"YYYY-MM-DD"`, `"MMM DD, YYYY"`, etc.
+
+**Conditional Rendering:**
+```javascript
+{props.user && props.user.id === review.user_id &&
+  // Show Edit/Delete buttons
+}
+```
+- First condition: `props.user` - User is logged in
+- Second condition: `props.user.id === review.user_id` - User owns review
+- Both must be true to show buttons
+
+**Media Component:**
+```javascript
+<Media key={index}>
+  <Media.Body>
+    {/* Review content */}
+  </Media.Body>
+</Media>
+```
+- Bootstrap Media component for content blocks
+- Good for displaying user-generated content
+- Provides consistent spacing and layout
+
+### Example Review Display
+
+When you view a movie with reviews, you'll see:
+
+```
+[Movie Poster]    The Great Train Robbery
+                  A group of bandits stage a brazen train hold-up...
+                  
+                  Add Review (if logged in)
+
+                  Reviews
+                  
+                  john reviewed on 10th May 2021
+                  Great movie!
+                  [Edit] [Delete] (only if you're john)
+                  
+                  jane reviewed on 11th May 2021
+                  Amazing cinematography!
+                  [Edit] [Delete] (only if you're jane)
+```
+
+---
+
+## CHAPTER 20: LOGIN COMPONENT
+
+A simple login system that stores user information in state. This is a placeholder for a full authentication system.
+
+### Complete login.js
+
+Replace the contents of `frontend/src/components/login.js`:
+
+```javascript
+import React, { useState } from 'react';
+import Form from 'react-bootstrap/Form';
+import Button from 'react-bootstrap/Button';
+
+const Login = props => {
+  
+  const [name, setName] = useState("");
+  const [id, setId] = useState("");
+
+  const onChangeName = e => {
+    const name = e.target.value;
+    setName(name);
+  }
+
+  const onChangeId = e => {
+    const id = e.target.value;
+    setId(id);
+  }
+
+  const login = () => {
+    props.login({ name: name, id: id });
+    props.history.push('/');
+  }
+
+  return (
+    <div>
+      <Form>
+        <Form.Group>
+          <Form.Label>Username</Form.Label>
+          <Form.Control
+            type="text"
+            placeholder="Enter username"
+            value={name}
+            onChange={onChangeName}
+          />
+        </Form.Group>
+
+        <Form.Group>
+          <Form.Label>ID</Form.Label>
+          <Form.Control
+            type="text"
+            placeholder="Enter id"
+            value={id}
+            onChange={onChangeId}
+          />
+        </Form.Group>
+
+        <Button variant="primary" onClick={login}>
+          Submit
+        </Button>
+      </Form>
     </div>
   );
 }
@@ -197,402 +395,226 @@ function Login() {
 export default Login;
 ```
 
-### Step 2: Update App.js
-
-Replace the contents of `frontend/src/App.js`:
-
-```javascript
-import React from 'react';
-import { Switch, Route, Link } from "react-router-dom";
-import "bootstrap/dist/css/bootstrap.min.css";
-import Nav from 'react-bootstrap/Nav';
-import Navbar from 'react-bootstrap/Navbar';
-
-import AddReview from "./components/add-review";
-import MoviesList from "./components/movies-list";
-import Movie from "./components/movie";
-import Login from "./components/login";
-
-function App() {
-  const [user, setUser] = React.useState(null);
-
-  async function login(user = null) {
-    setUser(user);
-  }
-
-  async function logout() {
-    setUser(null);
-  }
-
-  return (
-    <div className="App">
-      <Navbar bg="light" expand="lg">
-        <Navbar.Brand href="#home">Movie Reviews</Navbar.Brand>
-        <Navbar.Toggle aria-controls="basic-navbar-nav" />
-        <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="mr-auto">
-            <Nav.Link>
-              <Link to={"/movies"}>Movies</Link>
-            </Nav.Link>
-            <Nav.Link>
-              {user ? (
-                <a onClick={logout}>Logout User</a>
-              ) : (
-                <Link to={"/login"}>Login</Link>
-              )}
-            </Nav.Link>
-          </Nav>
-        </Navbar.Collapse>
-      </Navbar>
-    </div>
-  );
-}
-
-export default App;
-```
-
-### Step 3: Wrap App with BrowserRouter
-
-Update `frontend/src/index.js`:
-
-```javascript
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
-import { BrowserRouter } from 'react-router-dom';
-
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <BrowserRouter>
-    <App />
-  </BrowserRouter>
-);
-```
-
 ### Code Explanation
 
-**User State Management:**
+**State Variables:**
 ```javascript
-const [user, setUser] = React.useState(null);
+const [name, setName] = useState("");
+const [id, setId] = useState("");
 ```
-- `user` holds the logged-in user info (or null if not logged in)
-- `setUser` is the function to update the user state
-- `React.useState(null)` initializes user as null (not logged in)
+- `name`: Username entered by user
+- `id`: User ID (in production, this would be generated)
 
-**Login Function:**
+**onChange Handlers:**
 ```javascript
-async function login(user = null) {
-  setUser(user);
+const onChangeName = e => {
+  const name = e.target.value;
+  setName(name);
+}
+
+const onChangeId = e => {
+  const id = e.target.value;
+  setId(id);
 }
 ```
-- Called from Login component to set user state
-- Passed as a prop to Login component later
+- Updates state when user types in fields
+- Creates controlled components (state controls value)
 
-**Logout Function:**
+**login Function:**
 ```javascript
-async function logout() {
-  setUser(null);
+const login = () => {
+  props.login({ name: name, id: id });
+  props.history.push('/');
 }
 ```
-- Resets user to null (logs out)
+- `props.login`: Function passed from App.js
+- Creates user object: `{ name: "john", id: "1234" }`
+- Calls `setUser()` in App.js to update user state
+- `props.history.push('/')`: Redirects to home page
+- User is now "logged in"
 
-**Conditional Rendering:**
+**Form Fields:**
 ```javascript
-{user ? (
-  <a onClick={logout}>Logout User</a>
-) : (
-  <Link to={"/login"}>Login</Link>
-)}
+<Form.Group>
+  <Form.Label>Username</Form.Label>
+  <Form.Control
+    type="text"
+    placeholder="Enter username"
+    value={name}
+    onChange={onChangeName}
+  />
+</Form.Group>
 ```
-- If user is logged in (user is truthy), show "Logout User"
-- If not logged in (user is null), show "Login" link
+- `value={name}`: Controlled input (state drives value)
+- `onChange={onChangeName}`: Updates state on input
+- Two-way data binding
 
-**React Router Links:**
+**Submit Button:**
 ```javascript
-<Link to={"/movies"}>Movies</Link>
+<Button variant="primary" onClick={login}>
+  Submit
+</Button>
 ```
-- `Link` component from react-router-dom navigates without page reload
-- `to` prop specifies the route path
+- Calls login function on click
+- No form submission (prevents page reload)
 
-### Test Your App
+### How Login Works
 
-Run the app:
-```bash
-npm start
-```
+**Login Flow:**
 
-You should see:
-- A navigation bar with "Movie Reviews" brand
-- "Movies" link
-- "Login" link
+1. User enters username: "john"
+2. User enters ID: "1234"
+3. User clicks Submit
+4. `login()` is called:
+   ```javascript
+   props.login({ name: "john", id: "1234" })
+   ```
+5. In App.js, `setUser()` updates user state
+6. User is redirected to home page
+7. Navbar now shows "Logout User" instead of "Login"
+8. User can now add/edit/delete their reviews
 
-The navbar is responsive - on mobile, it collapses into a hamburger menu.
+**Logout Flow:**
+
+1. User clicks "Logout User" in navbar
+2. `logout()` function in App.js is called:
+   ```javascript
+   async function logout() {
+     setUser(null);
+   }
+   ```
+3. User state is set to null
+4. Navbar shows "Login" again
+5. "Add Review" links disappear
+6. Edit/Delete buttons on reviews disappear
+
+### Important Note
+
+**This is a simplified login system:**
+- ❌ No password verification
+- ❌ No session persistence (refresh logs out)
+- ❌ No server-side authentication
+- ❌ No security measures
+
+**For production, implement:**
+- ✅ Real authentication (JWT, OAuth, Firebase)
+- ✅ Password hashing
+- ✅ Session management
+- ✅ HTTPS
+- ✅ CSRF protection
 
 ---
 
-## CHAPTER 15: DEFINING OUR ROUTES
+## TESTING YOUR APP
 
-Now we'll add routing so clicking the navbar links displays different components.
+### Test Complete Flow
 
-### Update App.js with Routes
+**1. View Movies:**
+- Go to `http://localhost:3000`
+- Should see movie cards
 
-Add the `Switch` and `Route` components after the Navbar in `App.js`:
+**2. View Movie Details:**
+- Click "View Reviews" on any movie
+- Should see movie poster, plot, and reviews (if any)
 
-```javascript
-import React from 'react';
-import { Switch, Route, Link } from "react-router-dom";
-import "bootstrap/dist/css/bootstrap.min.css";
-import Nav from 'react-bootstrap/Nav';
-import Navbar from 'react-bootstrap/Navbar';
+**3. Login:**
+- Click "Login" in navbar
+- Enter username: "john"
+- Enter ID: "1234"
+- Click Submit
+- Should redirect to home page
+- Navbar should show "Logout User"
 
-import AddReview from "./components/add-review";
-import MoviesList from "./components/movies-list";
-import Movie from "./components/movie";
-import Login from "./components/login";
+**4. Add Review:**
+- Go to a movie detail page
+- Should now see "Add Review" link
+- Click it (we'll implement this in next chapter)
 
-function App() {
-  const [user, setUser] = React.useState(null);
+**5. View Your Reviews:**
+- If you created reviews with user_id "1234" in Postman
+- You should see Edit/Delete buttons on those reviews
 
-  async function login(user = null) {
-    setUser(user);
-  }
+**6. Delete Review:**
+- Click Delete on a review you own
+- Review should disappear immediately
+- Check MongoDB Atlas - review should be deleted
 
-  async function logout() {
-    setUser(null);
-  }
+**7. Logout:**
+- Click "Logout User"
+- "Add Review" links should disappear
+- Edit/Delete buttons should disappear
 
-  return (
-    <div className="App">
-      <Navbar bg="light" expand="lg">
-        <Navbar.Brand href="#home">Movie Reviews</Navbar.Brand>
-        <Navbar.Toggle aria-controls="basic-navbar-nav" />
-        <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="mr-auto">
-            <Nav.Link>
-              <Link to={"/movies"}>Movies</Link>
-            </Nav.Link>
-            <Nav.Link>
-              {user ? (
-                <a onClick={logout}>Logout User</a>
-              ) : (
-                <Link to={"/login"}>Login</Link>
-              )}
-            </Nav.Link>
-          </Nav>
-        </Navbar.Collapse>
-      </Navbar>
+### Debug Tips
 
-      <Switch>
-        <Route exact path={["/", "/movies"]} component={MoviesList}>
-        </Route>
-        <Route path="/movies/:id/review" render={(props) =>
-          <AddReview {...props} user={user} />
-        }>
-        </Route>
-        <Route path="/movies/:id/" render={(props) =>
-          <Movie {...props} user={user} />
-        }>
-        </Route>
-        <Route path="/login" render={(props) =>
-          <Login {...props} login={login} />
-        }>
-        </Route>
-      </Switch>
-    </div>
-  );
-}
+**Check Console:**
+- Open Developer Tools (F12)
+- Console tab shows API responses
+- Look for errors
 
-export default App;
-```
+**Check Network Tab:**
+- See actual API calls
+- Verify request/response data
 
-### Code Explanation
+**Common Issues:**
 
-**Switch Component:**
-```javascript
-<Switch>
-  {/* Routes go here */}
-</Switch>
-```
-- Renders the FIRST matching route
-- Stops checking once a match is found
-- Prevents multiple routes from rendering at once
+**Reviews not showing:**
+- Create reviews in Postman first (Chapter 11)
+- Make sure movie_id matches
 
-**Route Types:**
+**Delete not working:**
+- Verify user_id matches review owner
+- Check browser console for errors
 
-**1. Component Route (Simple):**
-```javascript
-<Route exact path={["/", "/movies"]} component={MoviesList}>
-</Route>
-```
-- `exact` means path must match exactly (not just start with)
-- `path` can be an array for multiple paths
-- `component` renders the specified component
-- Both "/" and "/movies" will render MoviesList
-
-**2. Render Route (With Props):**
-```javascript
-<Route path="/movies/:id/review" render={(props) =>
-  <AddReview {...props} user={user} />
-}>
-</Route>
-```
-- `render` allows passing additional props
-- `{...props}` spreads React Router props (match, location, history)
-- `user={user}` passes our user state as a prop
-- `:id` is a URL parameter (e.g., /movies/123/review)
-
-**URL Parameters:**
-```javascript
-path="/movies/:id/"
-```
-- `:id` captures the movie ID from the URL
-- Example: `/movies/573a1390f29313caabcd4135/`
-- Accessible via `props.match.params.id` in the component
-
-**Route Breakdown:**
-
-| Path | Component | Purpose | Props Passed |
-|------|-----------|---------|--------------|
-| `/` or `/movies` | MoviesList | Home page with movie list | - |
-| `/movies/:id/review` | AddReview | Add/edit review for a movie | user |
-| `/movies/:id/` | Movie | View single movie with reviews | user |
-| `/login` | Login | Login page | login function |
-
-**Why Pass Props?**
-
-```javascript
-<AddReview {...props} user={user} />
-```
-- `{...props}` gives access to:
-  - `match.params.id` - movie ID from URL
-  - `history.push()` - programmatic navigation
-  - `location.state` - passed state data
-- `user={user}` allows component to check if user is logged in
-
-### Test Your Routes
-
-Run the app and test navigation:
-
-```bash
-npm start
-```
-
-**Test Cases:**
-
-1. Go to `http://localhost:3000/` → Should show "Movies List"
-2. Go to `http://localhost:3000/movies` → Should show "Movies List"
-3. Go to `http://localhost:3000/login` → Should show "Login"
-4. Go to `http://localhost:3000/movies/123` → Should show "Movie"
-5. Go to `http://localhost:3000/movies/123/review` → Should show "Add Review"
-
-**Click Navigation:**
-- Click "Movies" link → Should navigate to Movies List
-- Click "Login" link → Should navigate to Login
+**Login doesn't persist:**
+- Normal behavior (no session storage)
+- Will logout on page refresh
+- Will implement properly in later versions
 
 ---
 
-## COMPLETE APP.JS (Chapters 13-15)
+## PROJECT STATUS
 
-Here's the complete `frontend/src/App.js` with all changes:
+### Completed Components
 
-```javascript
-import React from 'react';
-import { Switch, Route, Link } from "react-router-dom";
-import "bootstrap/dist/css/bootstrap.min.css";
-import Nav from 'react-bootstrap/Nav';
-import Navbar from 'react-bootstrap/Navbar';
+✅ **App.js** - Main app with routing and user state
+✅ **MoviesList** - Search and display movies
+✅ **Movie** - Display single movie with reviews
+✅ **Login** - Simple login form
 
-import AddReview from "./components/add-review";
-import MoviesList from "./components/movies-list";
-import Movie from "./components/movie";
-import Login from "./components/login";
+### Remaining Components
 
-function App() {
-  const [user, setUser] = React.useState(null);
+⏳ **AddReview** - Create and edit reviews (next chapter)
 
-  async function login(user = null) {
-    setUser(user);
-  }
+### Features Working
 
-  async function logout() {
-    setUser(null);
-  }
-
-  return (
-    <div className="App">
-      <Navbar bg="light" expand="lg">
-        <Navbar.Brand href="#home">Movie Reviews</Navbar.Brand>
-        <Navbar.Toggle aria-controls="basic-navbar-nav" />
-        <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="mr-auto">
-            <Nav.Link>
-              <Link to={"/movies"}>Movies</Link>
-            </Nav.Link>
-            <Nav.Link>
-              {user ? (
-                <a onClick={logout}>Logout User</a>
-              ) : (
-                <Link to={"/login"}>Login</Link>
-              )}
-            </Nav.Link>
-          </Nav>
-        </Navbar.Collapse>
-      </Navbar>
-
-      <Switch>
-        <Route exact path={["/", "/movies"]} component={MoviesList}>
-        </Route>
-        <Route path="/movies/:id/review" render={(props) =>
-          <AddReview {...props} user={user} />
-        }>
-        </Route>
-        <Route path="/movies/:id/" render={(props) =>
-          <Movie {...props} user={user} />
-        }>
-        </Route>
-        <Route path="/login" render={(props) =>
-          <Login {...props} login={login} />
-        }>
-        </Route>
-      </Switch>
-    </div>
-  );
-}
-
-export default App;
-```
+✅ View all movies
+✅ Search by title
+✅ Filter by rating
+✅ View movie details
+✅ Display reviews with formatted dates
+✅ Login/logout
+✅ Delete reviews (for owners only)
+✅ Conditional rendering based on login state
 
 ---
 
-## PROJECT STRUCTURE SO FAR
+## COMPLETE FILE STRUCTURE
 
 ```
 movie-reviews/
 ├── backend/
-│   ├── api/
-│   │   ├── movies.route.js
-│   │   ├── movies.controller.js
-│   │   └── reviews.controller.js
-│   ├── dao/
-│   │   ├── moviesDAO.js
-│   │   └── reviewsDAO.js
-│   ├── .env
-│   ├── index.js
-│   ├── server.js
-│   └── package.json
+│   └── ... (completed in Chapters 1-12)
 └── frontend/
-    ├── public/
     ├── src/
     │   ├── components/
-    │   │   ├── movies-list.js
-    │   │   ├── movie.js
-    │   │   ├── add-review.js
-    │   │   └── login.js
-    │   ├── App.js
-    │   ├── App.css
-    │   ├── index.js
-    │   └── index.css
+    │   │   ├── movies-list.js ✅
+    │   │   ├── movie.js ✅
+    │   │   ├── add-review.js ⏳
+    │   │   └── login.js ✅
+    │   ├── services/
+    │   │   └── movies.js ✅
+    │   ├── App.js ✅
+    │   └── index.js ✅
     └── package.json
 ```
 
@@ -600,28 +622,26 @@ movie-reviews/
 
 ## SUMMARY
 
-✅ **Chapter 13:** 
-- Created React app with create-react-app
-- Installed dependencies (React Bootstrap, React Router, Axios)
-- Understood component-based architecture
+✅ **Chapter 18: Movie Component**
+- Displays single movie with poster and plot
+- Fetches movie data with embedded reviews using MongoDB $lookup
+- Implements delete review functionality
+- Shows "Add Review" link for logged-in users
+- Shows Edit/Delete only for review owners
 
-✅ **Chapter 14:**
-- Created navigation bar with Bootstrap
-- Implemented login/logout state management
-- Created basic component files
+✅ **Chapter 19: Listing Reviews**
+- Reviews displayed in Movie component
+- Date formatting with moment.js
+- Conditional rendering based on ownership
+- Media component for consistent layout
 
-✅ **Chapter 15:**
-- Set up React Router with Switch and Route
-- Defined routes for all components
-- Passed props (user, login function) to components
-- Implemented URL parameters for dynamic routes
+✅ **Chapter 20: Login Component**
+- Simple form with username and ID fields
+- Updates user state in App.js
+- Redirects to home after login
+- Enables review creation/editing/deletion
 
 **Next Steps:**
-In the following chapters, you'll:
-- Create a service to connect to the backend API
-- Implement the MoviesList component to display movies
-- Add search functionality
-- Display individual movies with reviews
-- Implement login, add/edit/delete reviews
+In Chapter 21, you'll implement the AddReview component to create and edit reviews with a form interface.
 
-Your frontend foundation is now ready!
+Your app is almost complete! Users can now browse movies, view reviews, login, and delete their own reviews.

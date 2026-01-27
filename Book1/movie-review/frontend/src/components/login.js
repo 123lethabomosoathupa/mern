@@ -1,16 +1,54 @@
-// Import React to enable JSX syntax
-import React from 'react';
+import React, {useState} from 'react'
+import Form from 'react-bootstrap/Form'
+import Button from 'react-bootstrap/Button'
 
-// Functional component for user login
-function Login() {
-  return (
-    // Root container for the login page
-    <div className="App">
-      {/* Placeholder text – will be replaced with a login form */}
-      Login
+const Login = props => {
+ 
+  const [name, setName] = useState("")
+  const [id, setId] = useState("") 
+
+  const onChangeName = e => {
+    const name = e.target.value
+    setName(name);
+  } 
+
+  const onChangeId = e => {
+    const id = e.target.value
+    setId(id);
+  } 
+
+  const login = () => {
+    props.login({name: name, id: id})
+    props.history.push('/')
+  } 
+
+  return(
+    <div>
+      <Form>
+        <Form.Group>
+          <Form.Label>Username</Form.Label>
+          <Form.Control
+            type="text"
+            placeholder="Enter username"
+            value={name}
+            onChange={onChangeName}
+          />
+        </Form.Group>
+        <Form.Group>
+          <Form.Label>ID</Form.Label>
+          <Form.Control
+            type="text"
+            placeholder="Enter id"
+            value={id}
+            onChange={onChangeId}
+          />
+        </Form.Group> 
+        <Button variant="primary" onClick={login}>
+          Submit
+        </Button>
+      </Form> 
     </div>
-  );
+  )
 }
 
-// Export component so it can be used in routing
 export default Login;
