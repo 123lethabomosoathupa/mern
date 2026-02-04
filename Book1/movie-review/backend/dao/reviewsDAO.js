@@ -1,98 +1,141 @@
-// Import MongoDB driver
-import mongodb from "mongodb"
+// FINAL FIXED reviewsDAO.js - Uses 'new ObjectId()' correctly
+// File: backend/dao/reviewsDAO.js
 
-// Extract ObjectId helper for MongoDB document IDs
+import mongodb from "mongodb"
 const ObjectId = mongodb.ObjectId
 
-// This will store the reviews collection reference
 let reviews
 
-// Data Access Object (DAO) for reviews collection
 export default class ReviewsDAO {
-
-  // Inject database connection (called once at server startup)
-  static async injectDB(conn) {
-    // Prevent re-creating the collection reference
+  
+  static async injectDB(conn) { 
     if (reviews) {
       return
     }
-
     try {
-      // Connect to the reviews collection
-      reviews = await conn
-        .db(process.env.MOVIEREVIEWS_NS)
-        .collection('reviews')
-    }
-    catch (e) {
-      // Log connection errors
-      console.error(
-        `unable to establish connection handle in reviewDAO: ${e}`
-      )
+      reviews = await conn.db(process.env.MOVIEREVIEWS_NS).collection('reviews')
+      console.log('Reviews collection connected successfully')
+    } catch(e) {
+      console.error(`Unable to establish connection handle in reviewDAO: ${e}`)
     }
   }
-
-  // ===================== ADD A REVIEW =====================
+  
   static async addReview(movieId, user, review, date) {
     try {
-      // Create a review document
       const reviewDoc = {
-        name: user.name,               // Reviewer's name
-        user_id: user._id,             // Reviewer's user ID
-        date: date,                    // Review date
-        review: review,                // Review content
-        movie_id: new ObjectId(movieId)    // Associated movie ID
+        name: user.name,
+        user_id: String(user._id),  // Force to string for consistency
+        date: date,
+        review: review,
+        movie_id: new ObjectId(movieId)  // ← FIXED: Added 'new'
       }
-
-      // Insert review into the database
-      return await reviews.insertOne(reviewDoc)
-    }
-    catch (e) {
-      // Handle insertion errors
-      console.error(`unable to post review: ${e}`)
+      
+      console.log('Adding review:', reviewDoc)
+      const result = await reviews.insertOne(reviewDoc)
+      console.log('Insert result:', result)
+      
+      return result
+    } catch(e) {
+      console.error(`Unable to post review: ${e}`)
       return { error: e }
     }
   }
-
-  // ===================== UPDATE A REVIEW =====================
+  
   static async updateReview(reviewId, userId, review, date) {
     try {
-      // Update review only if the user is the original author
+      console.log('=== DAO UPDATE REVIEW ===')
+      console.log('Review ID:', reviewId, 'Type:', typeof reviewId)
+      console.log('User ID:', userId, 'Type:', typeof userId)
+      console.log('Review text:', review)
+      
+      // Convert userId to string for consistency
+      const userIdString = String(userId)
+      
+      // First, find the review
+      const existingReview = await reviews.findOne({ _id: new ObjectId(reviewId) })  // ← FIXED: Added 'new'
+      console.log('Existing review found:', existingReview)
+      
+      if (!existingReview) {
+        console.error('Review not found with ID:', reviewId)
+        return { modifiedCount: 0, error: 'Review not found' }
+      }
+      
+      console.log('Existing review user_id:', existingReview.user_id, 'Type:', typeof existingReview.user_id)
+      console.log('Provided user_id:', userIdString, 'Type:', typeof userIdString)
+      
+      // Check if user IDs match (both converted to strings)
+      const existingUserIdString = String(existingReview.user_id)
+      const userIdMatch = existingUserIdString === userIdString
+      console.log('User ID match:', userIdMatch)
+      
+      if (!userIdMatch) {
+        console.error('User ID mismatch!')
+        console.error(`Existing: ${existingUserIdString}`)
+        console.error(`Provided: ${userIdString}`)
+        return { modifiedCount: 0, error: 'User ID mismatch - cannot update' }
+      }
+      
+      // Perform the update
       const updateResponse = await reviews.updateOne(
-        {
-          _id: ObjectId(reviewId), // Review ID
-          user_id: userId          // User ID (authorization check)
+        { 
+          _id: new ObjectId(reviewId)  // ← FIXED: Added 'new'
         },
-        {
-          $set: {
-            review: review,        // Updated review text
-            date: date             // Updated timestamp
-          }
-        }
+        { $set: { review: review, date: date } } 
       )
-
+      
+      console.log('MongoDB update response:', updateResponse)
+      console.log('Matched count:', updateResponse.matchedCount)
+      console.log('Modified count:', updateResponse.modifiedCount)
+      
+      if (updateResponse.modifiedCount === 0) {
+        console.error('No documents were modified')
+      }
+      
       return updateResponse
-    }
-    catch (e) {
-      // Handle update errors
-      console.error(`unable to update review: ${e}`)
-      return { error: e }
+      
+    } catch(e) {
+      console.error(`Unable to update review: ${e}`)
+      console.error('Error stack:', e.stack)
+      return { error: e, modifiedCount: 0 }
     }
   }
-
-  // ===================== DELETE A REVIEW =====================
+  
   static async deleteReview(reviewId, userId) {
     try {
-      // Delete review only if the user is the original author
+      console.log('=== DAO DELETE REVIEW ===')
+      console.log('Review ID:', reviewId)
+      console.log('User ID:', userId)
+      
+      // Convert to string for consistency
+      const userIdString = String(userId)
+      
+      // First find the review
+      const existingReview = await reviews.findOne({ _id: new ObjectId(reviewId) })  // ← FIXED: Added 'new'
+      console.log('Review to delete:', existingReview)
+      
+      if (!existingReview) {
+        console.error('Review not found')
+        return { deletedCount: 0 }
+      }
+      
+      // Check user ID match
+      const existingUserIdString = String(existingReview.user_id)
+      if (existingUserIdString !== userIdString) {
+        console.error('User ID mismatch - cannot delete')
+        console.error(`Existing: ${existingUserIdString}`)
+        console.error(`Provided: ${userIdString}`)
+        return { deletedCount: 0 }
+      }
+      
       const deleteResponse = await reviews.deleteOne({
-        _id: ObjectId(reviewId), // Review ID
-        user_id: userId          // User ID (authorization check)
+        _id: new ObjectId(reviewId)  // ← FIXED: Added 'new'
       })
-
+      
+      console.log('Delete response:', deleteResponse)
       return deleteResponse
-    }
-    catch (e) {
-      // Handle deletion errors
-      console.error(`unable to delete review: ${e}`)
+      
+    } catch(e) {
+      console.error(`Unable to delete review: ${e}`)
       return { error: e }
     }
   }
