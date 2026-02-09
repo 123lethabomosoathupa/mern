@@ -1,5 +1,0 @@
-mkdir E:\mongodb-\data\db
-"E:\mongodb-\bin\mongod.exe" --dbpath "E:\mongodb-\data\db"
-"E:\mongodb-\bin\mongod.exe"
-"E:\mongodb\bin\mongod.exe" --dbpath "E:\mongodb\data\db"
-"E:\mongodb\bin\mongosh.exe"
