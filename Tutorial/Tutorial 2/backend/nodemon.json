@@ -1,0 +1,8 @@
+{
+    "env": {
+        "MONGO_USER": "JadaMathele",
+        "MONGO_PASSWORD": "kPfIAdYSqOfix3ap",
+        "MONGO_DB_NAME": "events-react-dev",
+        "JWT_SECRET": "easyevent-super-secret-jwt-key-2024-do-not-share"
+    }
+}
