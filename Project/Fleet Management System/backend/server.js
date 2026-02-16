@@ -1,14 +1,17 @@
-const express = require('express');
-const dotenv = require('dotenv');
-const cors = require('cors');
-const morgan = require('morgan');
-const http = require('http');
-const socketio = require('socket.io');
-const connectDB = require('./config/db');
+const express = require("express");
+const dotenv = require("dotenv");
+const cors = require("cors");
+const morgan = require("morgan");
+const http = require("http");
+const socketio = require("socket.io");
+const connectDB = require("./config/db");
+
+
+
 
 dotenv.config();
-
 connectDB();
+
 
 const app = express();
 const server = http.createServer(app);
