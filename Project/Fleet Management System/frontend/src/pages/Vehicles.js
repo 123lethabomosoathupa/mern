@@ -122,9 +122,10 @@ function Vehicles() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this vehicle?')) {
+    if (window.confirm('Are you sure you want to delete this vehicle? This action cannot be undone.')) {
       try {
         await api.delete(`/vehicles/${id}`);
+        alert('Vehicle deleted successfully!');
         loadVehicles();
       } catch (error) {
         console.error('Error deleting vehicle:', error);
@@ -146,13 +147,11 @@ function Vehicles() {
     }
 
     try {
-      // Update vehicle with assigned driver
       await api.put(`/vehicles/${currentVehicle._id}`, {
         assignedDriver: selectedDriver,
         status: 'in-use'
       });
 
-      // Update driver with assigned vehicle
       await api.put(`/drivers/${selectedDriver}`, {
         currentVehicle: currentVehicle._id,
         status: 'on-duty'
@@ -176,13 +175,11 @@ function Vehicles() {
     try {
       const driverId = vehicle.assignedDriver._id;
 
-      // Remove driver from vehicle
       await api.put(`/vehicles/${vehicle._id}`, {
         assignedDriver: null,
         status: 'available'
       });
 
-      // Remove vehicle from driver
       await api.put(`/drivers/${driverId}`, {
         currentVehicle: null,
         status: 'available'
@@ -255,7 +252,6 @@ function Vehicles() {
                 Mileage: <strong>{vehicle.mileage.toLocaleString()} km</strong>
               </Typography>
 
-              {/* Driver Assignment Section */}
               {vehicle.assignedDriver ? (
                 <Box sx={{ mt: 2, p: 1.5, bgcolor: 'primary.light', borderRadius: 1 }}>
                   <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'white' }}>
@@ -302,11 +298,6 @@ function Vehicles() {
                       Assign Driver
                     </Button>
                   )}
-                  {!user?.role && (
-                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                      No driver assigned
-                    </Typography>
-                  )}
                 </Box>
               )}
 
@@ -316,18 +307,18 @@ function Vehicles() {
                     size="small"
                     color="primary"
                     onClick={() => handleOpenDialog(vehicle)}
+                    title="Edit Vehicle"
                   >
                     <Edit />
                   </IconButton>
-                  {user?.role === 'admin' && (
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleDelete(vehicle._id)}
-                    >
-                      <Delete />
-                    </IconButton>
-                  )}
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() => handleDelete(vehicle._id)}
+                    title="Delete Vehicle"
+                  >
+                    <Delete />
+                  </IconButton>
                 </Box>
               )}
             </Paper>
@@ -335,66 +326,27 @@ function Vehicles() {
         ))}
       </Grid>
 
-      {/* Add/Edit Vehicle Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
         <DialogTitle>{editMode ? 'Edit Vehicle' : 'Add New Vehicle'}</DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Vehicle Number"
-                  name="vehicleNumber"
-                  value={formData.vehicleNumber}
-                  onChange={handleChange}
-                  required
-                />
+                <TextField fullWidth label="Vehicle Number" name="vehicleNumber" value={formData.vehicleNumber} onChange={handleChange} required />
               </Grid>
-
               <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Make"
-                  name="make"
-                  value={formData.make}
-                  onChange={handleChange}
-                  required
-                />
+                <TextField fullWidth label="Make" name="make" value={formData.make} onChange={handleChange} required />
               </Grid>
-
               <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Model"
-                  name="model"
-                  value={formData.model}
-                  onChange={handleChange}
-                  required
-                />
+                <TextField fullWidth label="Model" name="model" value={formData.model} onChange={handleChange} required />
               </Grid>
-
               <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Year"
-                  name="year"
-                  type="number"
-                  value={formData.year}
-                  onChange={handleChange}
-                  required
-                />
+                <TextField fullWidth label="Year" name="year" type="number" value={formData.year} onChange={handleChange} required />
               </Grid>
-
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth required>
                   <InputLabel>Type</InputLabel>
-                  <Select
-                    name="type"
-                    value={formData.type}
-                    onChange={handleChange}
-                    label="Type"
-                  >
+                  <Select name="type" value={formData.type} onChange={handleChange} label="Type">
                     <MenuItem value="truck">Truck</MenuItem>
                     <MenuItem value="van">Van</MenuItem>
                     <MenuItem value="car">Car</MenuItem>
@@ -402,44 +354,23 @@ function Vehicles() {
                   </Select>
                 </FormControl>
               </Grid>
-
               <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Capacity"
-                  name="capacity"
-                  type="number"
-                  value={formData.capacity}
-                  onChange={handleChange}
-                  required
-                />
+                <TextField fullWidth label="Capacity" name="capacity" type="number" value={formData.capacity} onChange={handleChange} required />
               </Grid>
-
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth required>
                   <InputLabel>Capacity Unit</InputLabel>
-                  <Select
-                    name="capacityUnit"
-                    value={formData.capacityUnit}
-                    onChange={handleChange}
-                    label="Capacity Unit"
-                  >
+                  <Select name="capacityUnit" value={formData.capacityUnit} onChange={handleChange} label="Capacity Unit">
                     <MenuItem value="kg">Kilograms (kg)</MenuItem>
                     <MenuItem value="tons">Tons</MenuItem>
                     <MenuItem value="cubic_meters">Cubic Meters</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
-
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth required>
                   <InputLabel>Fuel Type</InputLabel>
-                  <Select
-                    name="fuelType"
-                    value={formData.fuelType}
-                    onChange={handleChange}
-                    label="Fuel Type"
-                  >
+                  <Select name="fuelType" value={formData.fuelType} onChange={handleChange} label="Fuel Type">
                     <MenuItem value="petrol">Petrol</MenuItem>
                     <MenuItem value="diesel">Diesel</MenuItem>
                     <MenuItem value="electric">Electric</MenuItem>
@@ -447,39 +378,16 @@ function Vehicles() {
                   </Select>
                 </FormControl>
               </Grid>
-
               <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Fuel Consumption (L/100km)"
-                  name="fuelConsumption"
-                  type="number"
-                  value={formData.fuelConsumption}
-                  onChange={handleChange}
-                />
+                <TextField fullWidth label="Fuel Consumption (L/100km)" name="fuelConsumption" type="number" value={formData.fuelConsumption} onChange={handleChange} />
               </Grid>
-
               <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Current Mileage (km)"
-                  name="mileage"
-                  type="number"
-                  value={formData.mileage}
-                  onChange={handleChange}
-                  required
-                />
+                <TextField fullWidth label="Current Mileage (km)" name="mileage" type="number" value={formData.mileage} onChange={handleChange} required />
               </Grid>
-
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth required>
                   <InputLabel>Status</InputLabel>
-                  <Select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleChange}
-                    label="Status"
-                  >
+                  <Select name="status" value={formData.status} onChange={handleChange} label="Status">
                     <MenuItem value="available">Available</MenuItem>
                     <MenuItem value="in-use">In Use</MenuItem>
                     <MenuItem value="maintenance">Maintenance</MenuItem>
@@ -487,49 +395,29 @@ function Vehicles() {
                   </Select>
                 </FormControl>
               </Grid>
-
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Notes"
-                  name="notes"
-                  multiline
-                  rows={3}
-                  value={formData.notes}
-                  onChange={handleChange}
-                />
+                <TextField fullWidth label="Notes" name="notes" multiline rows={3} value={formData.notes} onChange={handleChange} />
               </Grid>
             </Grid>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseDialog}>Cancel</Button>
-            <Button type="submit" variant="contained">
-              {editMode ? 'Update' : 'Add'}
-            </Button>
+            <Button type="submit" variant="contained">{editMode ? 'Update' : 'Add'}</Button>
           </DialogActions>
         </form>
       </Dialog>
 
-      {/* Assign Driver Dialog */}
       <Dialog open={openAssignDialog} onClose={() => setOpenAssignDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          Assign Driver to {currentVehicle?.vehicleNumber}
-        </DialogTitle>
+        <DialogTitle>Assign Driver to {currentVehicle?.vehicleNumber}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
             <FormControl fullWidth required>
               <InputLabel>Select Driver</InputLabel>
-              <Select
-                value={selectedDriver}
-                onChange={(e) => setSelectedDriver(e.target.value)}
-                label="Select Driver"
-              >
+              <Select value={selectedDriver} onChange={(e) => setSelectedDriver(e.target.value)} label="Select Driver">
                 {drivers.map((driver) => (
                   <MenuItem key={driver._id} value={driver._id}>
                     <Box>
-                      <Typography variant="body1">
-                        {driver.user?.name}
-                      </Typography>
+                      <Typography variant="body1">{driver.user?.name}</Typography>
                       <Typography variant="caption" color="text.secondary">
                         License: {driver.licenseNumber} | Experience: {driver.experience} years | Rating: {driver.rating}/5
                       </Typography>
@@ -538,7 +426,6 @@ function Vehicles() {
                 ))}
               </Select>
             </FormControl>
-
             {drivers.length === 0 && (
               <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
                 No available drivers. All drivers are currently assigned to vehicles.
@@ -548,13 +435,7 @@ function Vehicles() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenAssignDialog(false)}>Cancel</Button>
-          <Button 
-            variant="contained" 
-            onClick={handleAssignDriver}
-            disabled={!selectedDriver}
-          >
-            Assign Driver
-          </Button>
+          <Button variant="contained" onClick={handleAssignDriver} disabled={!selectedDriver}>Assign Driver</Button>
         </DialogActions>
       </Dialog>
     </Container>

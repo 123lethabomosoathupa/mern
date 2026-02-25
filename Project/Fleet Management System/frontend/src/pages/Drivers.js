@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Container, Grid, Typography, Button, Dialog, DialogTitle,
-  DialogContent, DialogActions, TextField, Select, MenuItem,
-  FormControl, InputLabel, Box, Chip, Paper, Avatar
+  Container, Grid, Typography, Box, Chip, Paper, Avatar, IconButton
 } from '@mui/material';
-import { Person, Star } from '@mui/icons-material';
+import { Person, Star, Edit, Delete } from '@mui/icons-material';
+import {
+  Dialog, DialogTitle, DialogContent, DialogActions, Button,
+  TextField, Select, MenuItem, FormControl, InputLabel
+} from '@mui/material';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -65,9 +67,25 @@ function Drivers() {
       await api.put(`/drivers/${currentDriver._id}`, formData);
       loadDrivers();
       handleCloseDialog();
+      alert('Driver updated successfully!');
     } catch (error) {
       console.error('Error updating driver:', error);
       alert(error.response?.data?.message || 'Error updating driver');
+    }
+  };
+
+  const handleDelete = async (driverId) => {
+    if (!window.confirm('Are you sure you want to delete this driver? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await api.delete(`/drivers/${driverId}`);
+      alert('Driver deleted successfully!');
+      loadDrivers();
+    } catch (error) {
+      console.error('Error deleting driver:', error);
+      alert(error.response?.data?.message || 'Error deleting driver');
     }
   };
 
@@ -90,10 +108,7 @@ function Drivers() {
       <Grid container spacing={3}>
         {drivers.map((driver) => (
           <Grid item xs={12} sm={6} md={4} key={driver._id}>
-            <Paper 
-              sx={{ p: 2, cursor: 'pointer', '&:hover': { boxShadow: 6 } }}
-              onClick={() => (user?.role === 'admin' || user?.role === 'dispatcher') && handleOpenDialog(driver)}
-            >
+            <Paper sx={{ p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <Avatar sx={{ mr: 2, bgcolor: 'primary.main' }}>
                   <Person />
@@ -141,6 +156,28 @@ function Drivers() {
                 <Typography variant="body2" color="primary" sx={{ mt: 1 }}>
                   Vehicle: {driver.currentVehicle.vehicleNumber}
                 </Typography>
+              )}
+
+              {(user?.role === 'admin' || user?.role === 'dispatcher') && (
+                <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                  <IconButton
+                    size="small"
+                    color="primary"
+                    onClick={() => handleOpenDialog(driver)}
+                    title="Edit Driver"
+                  >
+                    <Edit />
+                  </IconButton>
+                  
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() => handleDelete(driver._id)}
+                    title="Delete Driver"
+                  >
+                    <Delete />
+                  </IconButton>
+                </Box>
               )}
             </Paper>
           </Grid>

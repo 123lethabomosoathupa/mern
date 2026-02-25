@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
   Container, Grid, Typography, Box, Paper, List, ListItem,
-  ListItemText, TextField, Button, Avatar, Divider, Chip
+  ListItemText, TextField, Button, Avatar, Divider, Chip, IconButton
 } from '@mui/material';
-import { Send, Person } from '@mui/icons-material';
+import { Send, Person, Delete } from '@mui/icons-material';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { getSocket } from '../services/socket';
@@ -37,7 +37,6 @@ function Communication() {
 
   const loadUsers = async () => {
     try {
-      // Get all drivers and dispatchers
       const [driversRes, authRes] = await Promise.all([
         api.get('/drivers'),
         api.get('/auth/me')
@@ -88,6 +87,21 @@ function Communication() {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
+    }
+  };
+
+  const handleDeleteMessage = async (messageId) => {
+    if (!window.confirm('Are you sure you want to delete this message?')) {
+      return;
+    }
+
+    try {
+      await api.delete(`/messages/${messageId}`);
+      setMessages(messages.filter(m => m._id !== messageId));
+      alert('Message deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      alert(error.response?.data?.message || 'Error deleting message');
     }
   };
 
@@ -172,7 +186,8 @@ function Communication() {
                           bgcolor: msg.sender._id === user._id ? 'primary.light' : 'grey.200',
                           color: msg.sender._id === user._id ? 'white' : 'black',
                           borderRadius: 2,
-                          p: 1.5
+                          p: 1.5,
+                          position: 'relative'
                         }}
                       >
                         <Typography variant="body2">{msg.message}</Typography>
@@ -186,6 +201,24 @@ function Communication() {
                         >
                           {formatTime(msg.createdAt)}
                         </Typography>
+                        
+                        {/* Delete button for own messages */}
+                        {msg.sender._id === user._id && (
+                          <IconButton
+                            size="small"
+                            sx={{
+                              position: 'absolute',
+                              top: 4,
+                              right: 4,
+                              color: 'inherit',
+                              opacity: 0.7,
+                              '&:hover': { opacity: 1 }
+                            }}
+                            onClick={() => handleDeleteMessage(msg._id)}
+                          >
+                            <Delete sx={{ fontSize: 16 }} />
+                          </IconButton>
+                        )}
                       </Box>
                     </Box>
                   ))}

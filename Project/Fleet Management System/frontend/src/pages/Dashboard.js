@@ -139,7 +139,7 @@ function Dashboard() {
               Total Operating Costs
             </Typography>
             <Typography variant="h3" color="error">
-              ${stats.totalCosts.toLocaleString()}
+              R{stats.totalCosts.toLocaleString()}
             </Typography>
           </Paper>
         </Grid>

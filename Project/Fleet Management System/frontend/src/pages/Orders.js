@@ -136,6 +136,7 @@ function Orders() {
       await api.post('/orders', formData);
       loadOrders();
       handleCloseDialog();
+      alert('Order created successfully!');
     } catch (error) {
       console.error('Error creating order:', error);
       alert(error.response?.data?.message || 'Error creating order');
@@ -155,6 +156,7 @@ function Orders() {
       loadVehicles();
       loadDrivers();
       setOpenAssignDialog(false);
+      alert('Order assigned successfully!');
     } catch (error) {
       console.error('Error assigning order:', error);
       alert(error.response?.data?.message || 'Error assigning order');
@@ -165,9 +167,25 @@ function Orders() {
     try {
       await api.put(`/orders/${orderId}`, { status: newStatus });
       loadOrders();
+      alert('Order status updated!');
     } catch (error) {
       console.error('Error updating order:', error);
       alert(error.response?.data?.message || 'Error updating order');
+    }
+  };
+
+  const handleDelete = async (orderId) => {
+    if (!window.confirm('Are you sure you want to delete this order? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await api.delete(`/orders/${orderId}`);
+      alert('Order deleted successfully!');
+      loadOrders();
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      alert(error.response?.data?.message || 'Error deleting order');
     }
   };
 
@@ -286,7 +304,7 @@ function Orders() {
                 </Stepper>
               </Box>
 
-              <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+              <Box sx={{ display: 'flex', gap: 1, mt: 2, flexWrap: 'wrap' }}>
                 {order.status === 'pending' && (user?.role === 'admin' || user?.role === 'dispatcher') && (
                   <Button
                     variant="contained"
@@ -315,6 +333,17 @@ function Orders() {
                     onClick={() => handleUpdateStatus(order._id, 'completed')}
                   >
                     Complete Delivery
+                  </Button>
+                )}
+
+                {(user?.role === 'admin' || user?.role === 'dispatcher') && (
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    size="small"
+                    onClick={() => handleDelete(order._id)}
+                  >
+                    Delete
                   </Button>
                 )}
               </Box>

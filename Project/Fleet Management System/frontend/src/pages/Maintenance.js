@@ -4,7 +4,7 @@ import {
   DialogContent, DialogActions, TextField, Select, MenuItem,
   FormControl, InputLabel, Box, Chip, Paper, IconButton
 } from '@mui/material';
-import { Add, Edit, Build } from '@mui/icons-material';
+import { Add, Edit, Build, Delete } from '@mui/icons-material';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -133,6 +133,20 @@ function Maintenance() {
       month: 'long',
       day: 'numeric'
     });
+  };
+  const handleDelete = async (recordId) => {
+    if (!window.confirm('Are you sure you want to delete this maintenance record? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await api.delete(`/maintenance/${recordId}`);
+      alert('Maintenance record deleted successfully!');
+      loadRecords();
+    } catch (error) {
+      console.error('Error deleting maintenance record:', error);
+      alert(error.response?.data?.message || 'Error deleting record');
+    }
   };
 
   return (
@@ -351,6 +365,27 @@ function Maintenance() {
           </DialogActions>
         </form>
       </Dialog>
+      {(user?.role === 'admin' || user?.role === 'dispatcher') && (
+        <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+          <IconButton
+            size="small"
+            color="primary"
+            onClick={() => handleOpenDialog(record)}
+            title="Edit"
+          >
+            <Edit />
+          </IconButton>
+
+          <IconButton
+            size="small"
+            color="error"
+            onClick={() => handleDelete(record._id)}
+            title="Delete"
+          >
+            <Delete />
+          </IconButton>
+        </Box>
+      )}
     </Container>
   );
 }

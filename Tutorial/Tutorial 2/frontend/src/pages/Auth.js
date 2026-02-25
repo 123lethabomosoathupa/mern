@@ -1,36 +1,59 @@
+// Import React and Component class
 import React, { Component } from 'react';
 
+// Import CSS styling
 import './Auth.css';
+
+// Import authentication context (global auth state)
 import AuthContext from '../context/auth-context';
 
 class AuthPage extends Component {
+
+  // ===============================
+  // COMPONENT STATE
+  // ===============================
   state = {
-    isLogin: true
+    isLogin: true // true = Login mode, false = Signup mode
   };
 
+  // Allows this component to access AuthContext using this.context
   static contextType = AuthContext;
 
   constructor(props) {
     super(props);
+
+    // Create refs to directly access input field values
     this.emailEl = React.createRef();
     this.passwordEl = React.createRef();
   }
 
+  // ===============================
+  // SWITCH BETWEEN LOGIN & SIGNUP
+  // ===============================
   switchModeHandler = () => {
     this.setState(prevState => {
-      return { isLogin: !prevState.isLogin };
+      return { isLogin: !prevState.isLogin }; // Toggle mode
     });
   };
 
+  // ===============================
+  // FORM SUBMIT HANDLER
+  // ===============================
   submitHandler = event => {
-    event.preventDefault();
+    event.preventDefault(); // Prevent page reload
+
+    // Get input values from refs
     const email = this.emailEl.current.value;
     const password = this.passwordEl.current.value;
 
+    // Basic validation
     if (email.trim().length === 0 || password.trim().length === 0) {
       return;
     }
 
+    // ===============================
+    // DEFAULT REQUEST (LOGIN)
+    // ===============================
     let requestBody = {
       query: `
         query Login($email: String!, $password: String!) {
@@ -47,6 +70,9 @@ class AuthPage extends Component {
       }
     };
 
+    // ===============================
+    // IF SIGNUP MODE → USE MUTATION
+    // ===============================
     if (!this.state.isLogin) {
       requestBody = {
         query: `
@@ -64,6 +90,9 @@ class AuthPage extends Component {
       };
     }
 
+    // ===============================
+    // SEND REQUEST TO BACKEND
+    // ===============================
     // FIX #1: use port 8000 to match backend
     fetch('http://localhost:8000/graphql', {
       method: 'POST',
@@ -73,14 +102,20 @@ class AuthPage extends Component {
       }
     })
       .then(res => {
+
+        // Check for successful response
         if (res.status !== 200 && res.status !== 201) {
           throw new Error('Failed!');
         }
+
         return res.json();
       })
       .then(resData => {
-        // FIX #3: only read login data when actually logging in
-        // On signup, resData.data.createUser exists — resData.data.login does not
+
+        // ===============================
+        // IF LOGIN SUCCESSFUL
+        // ===============================
+        // FIX #3: Only access login data when logging in
         if (this.state.isLogin && resData.data.login) {
           this.context.login(
             resData.data.login.token,
@@ -88,29 +123,45 @@ class AuthPage extends Component {
             resData.data.login.tokenExpiration
           );
         }
-        // After successful signup, automatically switch to login mode
+
+        // ===============================
+        // IF SIGNUP SUCCESSFUL
+        // ===============================
+        // Automatically switch back to login mode
         if (!this.state.isLogin && resData.data.createUser) {
           this.setState({ isLogin: true });
         }
       })
       .catch(err => {
+        // Handle errors
         console.log(err);
       });
   };
 
+  // ===============================
+  // RENDER METHOD
+  // ===============================
   render() {
     return (
       <form className="auth-form" onSubmit={this.submitHandler}>
+
+        {/* Email Input */}
         <div className="form-control">
           <label htmlFor="email">E-Mail</label>
           <input type="email" id="email" ref={this.emailEl} />
         </div>
+
+        {/* Password Input */}
         <div className="form-control">
           <label htmlFor="password">Password</label>
           <input type="password" id="password" ref={this.passwordEl} />
         </div>
+
+        {/* Buttons */}
         <div className="form-actions">
           <button type="submit">Submit</button>
+
+          {/* Toggle between Login & Signup */}
           <button type="button" onClick={this.switchModeHandler}>
             Switch to {this.state.isLogin ? 'Signup' : 'Login'}
           </button>

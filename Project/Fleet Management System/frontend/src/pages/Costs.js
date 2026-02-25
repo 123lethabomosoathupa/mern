@@ -3,9 +3,9 @@ import {
   Container, Grid, Typography, Button, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField, Select, MenuItem,
   FormControl, InputLabel, Box, Paper, Table, TableBody,
-  TableCell, TableContainer, TableHead, TableRow
+  TableCell, TableContainer, TableHead, TableRow, IconButton
 } from '@mui/material';
-import { Add, AttachMoney } from '@mui/icons-material';
+import { Add, AttachMoney, Delete } from '@mui/icons-material';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -101,9 +101,25 @@ function Costs() {
       await api.post('/costs', formData);
       loadCosts();
       handleCloseDialog();
+      alert('Cost record added successfully!');
     } catch (error) {
       console.error('Error creating cost record:', error);
       alert(error.response?.data?.message || 'Error creating cost record');
+    }
+  };
+
+  const handleDelete = async (costId) => {
+    if (!window.confirm('Are you sure you want to delete this cost record? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await api.delete(`/costs/${costId}`);
+      alert('Cost record deleted successfully!');
+      loadCosts();
+    } catch (error) {
+      console.error('Error deleting cost:', error);
+      alert(error.response?.data?.message || 'Error deleting cost');
     }
   };
 
@@ -183,6 +199,9 @@ function Costs() {
                 <TableCell align="right">Unit Price</TableCell>
                 <TableCell align="right">Amount</TableCell>
                 <TableCell>Payment</TableCell>
+                {(user?.role === 'admin' || user?.role === 'dispatcher') && (
+                  <TableCell align="center">Actions</TableCell>
+                )}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -206,6 +225,19 @@ function Costs() {
                   <TableCell sx={{ textTransform: 'capitalize' }}>
                     {cost.paymentMethod}
                   </TableCell>
+                  
+                  {(user?.role === 'admin' || user?.role === 'dispatcher') && (
+                    <TableCell align="center">
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => handleDelete(cost._id)}
+                        title="Delete Cost"
+                      >
+                        <Delete />
+                      </IconButton>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
@@ -222,12 +254,7 @@ function Costs() {
               <Grid item xs={12}>
                 <FormControl fullWidth required>
                   <InputLabel>Vehicle</InputLabel>
-                  <Select
-                    name="vehicle"
-                    value={formData.vehicle}
-                    onChange={handleChange}
-                    label="Vehicle"
-                  >
+                  <Select name="vehicle" value={formData.vehicle} onChange={handleChange} label="Vehicle">
                     {vehicles.map((vehicle) => (
                       <MenuItem key={vehicle._id} value={vehicle._id}>
                         {vehicle.vehicleNumber} - {vehicle.make} {vehicle.model}
@@ -240,12 +267,7 @@ function Costs() {
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth required>
                   <InputLabel>Type</InputLabel>
-                  <Select
-                    name="type"
-                    value={formData.type}
-                    onChange={handleChange}
-                    label="Type"
-                  >
+                  <Select name="type" value={formData.type} onChange={handleChange} label="Type">
                     <MenuItem value="fuel">Fuel</MenuItem>
                     <MenuItem value="maintenance">Maintenance</MenuItem>
                     <MenuItem value="insurance">Insurance</MenuItem>
@@ -258,75 +280,29 @@ function Costs() {
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Date"
-                  name="date"
-                  type="date"
-                  value={formData.date}
-                  onChange={handleChange}
-                  InputLabelProps={{ shrink: true }}
-                  required
-                />
+                <TextField fullWidth label="Date" name="date" type="date" value={formData.date} onChange={handleChange} InputLabelProps={{ shrink: true }} required />
               </Grid>
 
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  placeholder="E.g., Full tank - diesel"
-                />
+                <TextField fullWidth label="Description" name="description" value={formData.description} onChange={handleChange} placeholder="E.g., Full tank - diesel" />
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Quantity"
-                  name="quantity"
-                  type="number"
-                  value={formData.quantity}
-                  onChange={handleChange}
-                  placeholder="E.g., 65 liters"
-                />
+                <TextField fullWidth label="Quantity" name="quantity" type="number" value={formData.quantity} onChange={handleChange} placeholder="E.g., 65 liters" />
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Unit Price (R)"
-                  name="unitPrice"
-                  type="number"
-                  value={formData.unitPrice}
-                  onChange={handleChange}
-                  placeholder="E.g., 22.50"
-                />
+                <TextField fullWidth label="Unit Price (R)" name="unitPrice" type="number" value={formData.unitPrice} onChange={handleChange} placeholder="E.g., 22.50" />
               </Grid>
 
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Total Amount (R)"
-                  name="amount"
-                  type="number"
-                  value={formData.amount}
-                  onChange={handleChange}
-                  required
-                  helperText="Auto-calculated if quantity and unit price provided"
-                />
+                <TextField fullWidth label="Total Amount (R)" name="amount" type="number" value={formData.amount} onChange={handleChange} required helperText="Auto-calculated if quantity and unit price provided" />
               </Grid>
 
               <Grid item xs={12}>
                 <FormControl fullWidth required>
                   <InputLabel>Payment Method</InputLabel>
-                  <Select
-                    name="paymentMethod"
-                    value={formData.paymentMethod}
-                    onChange={handleChange}
-                    label="Payment Method"
-                  >
+                  <Select name="paymentMethod" value={formData.paymentMethod} onChange={handleChange} label="Payment Method">
                     <MenuItem value="cash">Cash</MenuItem>
                     <MenuItem value="card">Card</MenuItem>
                     <MenuItem value="bank-transfer">Bank Transfer</MenuItem>
@@ -336,15 +312,7 @@ function Costs() {
               </Grid>
 
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Notes"
-                  name="notes"
-                  multiline
-                  rows={2}
-                  value={formData.notes}
-                  onChange={handleChange}
-                />
+                <TextField fullWidth label="Notes" name="notes" multiline rows={2} value={formData.notes} onChange={handleChange} />
               </Grid>
             </Grid>
           </DialogContent>
