@@ -1,0 +1,17 @@
+[
+    {
+        "id": 1,
+        "quote": "We help others by helping ourselves",
+        "by": "Oprah Winfrey"
+    },
+    {
+        "id": 2,
+        "quote": "Education is the most powerful weapon you can use to change the world",
+        "by": "Nelson Mandela"
+    },
+    {
+        "id": 3,
+        "quote": "You only live once, but if you do it right, once is enough",
+        "by": "Mae West"
+    }
+]
