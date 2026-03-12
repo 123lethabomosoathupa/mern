@@ -1,5 +1,11 @@
+import Repos from "../../components/Repos";
+
 const UserReposPage = ({ params: { user } }) => {
-  return <div>Users Repo Page for: {user}</div>;
+  return (
+    <div>
+      <Repos user={user} />
+    </div>
+  );
 };
 
 export default UserReposPage;
