@@ -1,14 +1,12 @@
-import books from "../data.json";
 import { NextResponse } from "next/server";
+import connectDB from "../../../lib/mongodb";
+import Book from "../../../models/Book";
  
 export const DELETE = async (request, { params }) => {
+  await connectDB();
   const id = params.id;
  
-  const index = books.findIndex((book) => book.id === id);
- 
-  if (index !== -1) {
-    books.splice(index, 1);
-  }
+  await Book.findByIdAndDelete(id);
  
   return new NextResponse(JSON.stringify({ "Book deleted": id }));
 };

@@ -1,21 +1,22 @@
-import books from "./data.json";
 import { NextResponse } from "next/server";
-import { v4 as uuidv4 } from "uuid";
+import connectDB from "../../lib/mongodb";
+import Book from "../../models/Book";
  
 export async function GET(req) {
+  await connectDB();
+  const books = await Book.find({});
   return NextResponse.json(books);
 }
  
 export async function POST(req) {
+  await connectDB();
   const { title, link, img } = await req.json();
  
-  const newBook = {
-    id: uuidv4(),
+  const newBook = await Book.create({
     title,
     link,
     img,
-  };
+  });
  
-  books.push(newBook);
   return NextResponse.json("Book added successfully");
 }
