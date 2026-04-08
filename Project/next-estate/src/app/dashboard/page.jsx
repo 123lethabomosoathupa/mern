@@ -17,8 +17,8 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (status === 'unauthenticated') { router.push('/sign-in'); return; }
-    if (status === 'authenticated') fetchMyListings();
-  }, [status]);
+    if (status === 'authenticated' && session?.user?.id) fetchMyListings();
+  }, [status, session]);
 
   const fetchMyListings = async () => {
     setLoading(true);
@@ -55,9 +55,17 @@ export default function Dashboard() {
     finally { setDeleting(false); setDeleteId(null); }
   };
 
+  // Show loading spinner while session is being fetched
   if (status === 'loading') return (
     <div className='min-h-screen bg-gray-100 flex items-center justify-center'>
       <p className='text-gray-500'>Loading...</p>
+    </div>
+  );
+
+  // Guard: session must exist before rendering anything that reads session.user
+  if (!session) return (
+    <div className='min-h-screen bg-gray-100 flex items-center justify-center'>
+      <p className='text-gray-500'>Redirecting to sign in...</p>
     </div>
   );
 
@@ -67,7 +75,9 @@ export default function Dashboard() {
         <div className='flex items-center justify-between mb-8'>
           <div>
             <h1 className='text-2xl font-bold text-gray-700'>My Dashboard</h1>
-            <p className='text-gray-500 text-sm mt-1'>Welcome back, {session?.user?.name}</p>
+            <p className='text-gray-500 text-sm mt-1'>
+              Welcome back, {session.user?.name ?? 'there'}
+            </p>
           </div>
           <Link href='/create-listing' className='flex items-center gap-2 bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-600 transition-colors'>
             <FaPlus className='text-xs' /> New Listing

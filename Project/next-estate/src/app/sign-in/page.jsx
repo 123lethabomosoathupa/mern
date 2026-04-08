@@ -1,10 +1,10 @@
 'use client';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-export default function SignIn() {
+function SignInForm() {
   const router = useRouter();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
@@ -34,11 +34,11 @@ export default function SignIn() {
         <form onSubmit={handleSubmit} className='flex flex-col gap-4'>
           <div>
             <label className='block text-sm font-medium text-gray-600 mb-1'>Email</label>
-            <input type='email' id='email' placeholder='you@example.com' className='border border-gray-300 p-3 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-gray-400' value={formData.email} onChange={handleChange} required />
+            <input type='email' id='email' placeholder='you@example.com' className='border border-gray-300 p-3 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-gray-400 text-gray-800 bg-white' value={formData.email} onChange={handleChange} required />
           </div>
           <div>
             <label className='block text-sm font-medium text-gray-600 mb-1'>Password</label>
-            <input type='password' id='password' placeholder='••••••••' className='border border-gray-300 p-3 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-gray-400' value={formData.password} onChange={handleChange} required />
+            <input type='password' id='password' placeholder='••••••••' className='border border-gray-300 p-3 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-gray-400 text-gray-800 bg-white' value={formData.password} onChange={handleChange} required />
           </div>
           {error && <p className='text-red-500 text-sm bg-red-50 border border-red-200 rounded-lg p-3'>{error}</p>}
           <button type='submit' disabled={loading} className='bg-gray-700 text-white p-3 rounded-lg font-semibold hover:bg-gray-600 disabled:opacity-70 transition-colors mt-2'>
@@ -51,5 +51,13 @@ export default function SignIn() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function SignIn() {
+  return (
+    <Suspense fallback={<div className='min-h-screen bg-gray-100 flex items-center justify-center'><p className='text-gray-500'>Loading...</p></div>}>
+      <SignInForm />
+    </Suspense>
   );
 }
